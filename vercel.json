@@ -6,7 +6,7 @@
       "use": "@vercel/node"
     },
     {
-      "src": "api/h/index.js",
+      "src": "api/p/index.js",
       "use": "@vercel/node"
     },
     {
@@ -20,8 +20,12 @@
       "dest": "/api/proxy.js"
     },
     {
+      "src": "/api/p/(.*)",
+      "dest": "/api/p/index.js"
+    },
+    {
       "src": "/api/h/?(.*)",
-      "dest": "api/h/index.js"
+      "dest": "/api/h/index.js"
     }
   ]
 }
