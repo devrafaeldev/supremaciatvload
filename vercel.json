@@ -16,16 +16,16 @@
   ],
   "routes": [
     {
-      "src": "/(.*)",
-      "dest": "/api/proxy.js"
-    },
-    {
       "src": "/api/p/(.*)",
       "dest": "/api/p/index.js"
     },
     {
       "src": "/api/h/?(.*)",
       "dest": "/api/h/index.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/proxy.js"
     }
   ]
 }
