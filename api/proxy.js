@@ -1,29 +1,18 @@
 import https from 'https';
 
 export default async function handler(req, res) {
-  const allowedOrigins = [
-    'https://c2luywxwdwjsawnv.github.io',
-    'https://futwebom.vercel.app',
-    'https://developer-tools.jwplayer.com',
-    'https://sinalpublicotv.vercel.app',
-    'https://sinalpublico.vercel.app'
-  ];
+  // Libera acesso de qualquer origem
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  const origin = req.headers.origin;
-
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  } else {
-    return res.status(403).send('Acesso negado');
-  }
-
+  // Responde pré-verificações do navegador (CORS preflight)
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
   }
 
-  const targetUrl = req.url?.slice(1); // Remove a primeira barra "/"
+  // Remove a barra inicial da URL recebida
+  const targetUrl = req.url?.slice(1);
   if (!targetUrl) {
     return res.status(400).send('URL inválida');
   }
@@ -33,24 +22,25 @@ export default async function handler(req, res) {
   const restPath = pathParts.slice(1).join('/');
 
   if (!channel || !restPath) {
-    return res.status(400).send('Acesso negado');
+    return res.status(400).send('Caminho incompleto');
   }
 
   try {
+    // Busca o HTML com o link base
     const apiUrl = `https://d1r94zrwa3gnlo-cloudfront.vercel.app/host/cpx/${channel}`;
-
-    // Busca o HTML da página
     const apiResponse = await fetch(apiUrl);
     const html = await apiResponse.text();
 
+    // Extrai a URL base do conteúdo HTML
     const match = html.match(/https?:\/\/[^\/]+\/[^\/]+/);
     if (!match) {
-      return res.status(404).send('URL base não encontrada');
+      return res.status(404).send('Base de URL não encontrada');
     }
 
     const baseUrl = match[0];
     const destinationUrl = `${baseUrl}/${restPath}`;
 
+    // Faz a requisição final para o destino
     const proxyResponse = await fetch(destinationUrl, {
       headers: {
         'User-Agent': '*',
@@ -59,11 +49,11 @@ export default async function handler(req, res) {
     });
 
     const contentType = proxyResponse.headers.get('content-type') || 'application/octet-stream';
-    const data = await proxyResponse.arrayBuffer();
+    const buffer = await proxyResponse.arrayBuffer();
 
+    // Retorna a resposta final
     res.setHeader('Content-Type', contentType);
-    res.status(proxyResponse.status).send(Buffer.from(data));
-
+    res.status(proxyResponse.status).send(Buffer.from(buffer));
   } catch (error) {
     console.error('Erro interno:', error);
     res.status(500).send('Erro interno no servidor');
