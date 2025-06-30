@@ -4,12 +4,24 @@
     {
       "src": "api/proxy.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "api/h/index.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "api/h/index.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
       "dest": "/api/proxy.js"
+    },
+    {
+      "src": "/api/h/?(.*)",
+      "dest": "api/h/index.js"
     }
   ]
 }
