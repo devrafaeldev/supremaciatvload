@@ -27,7 +27,7 @@ export default async function handler(req, res) {
 
   try {
     // Busca o HTML com o link base
-    const apiUrl = `https://d1r94zrwa3gnlo-cloudfront.vercel.app/host/ke/${channel}`;
+    const apiUrl = `https://supremaciatvload.vercel.app/api/h/${channel}`;
     const apiResponse = await fetch(apiUrl);
     const html = await apiResponse.text();
 
