@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     return res.status(400).send('URL inválida ou foi desligado.');
   }
 
-  const finalUrl = `https://playdvdtv.vercel.app/${targetUrl}/index.m3u8`;
+  const finalUrl = `https://embmaxtv.online/${targetUrl}/index.m3u8`;
 
   res.setHeader('Content-Type', 'text/plain');
   res.send(finalUrl);
