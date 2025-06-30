@@ -26,32 +26,49 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Busca o HTML com o link base
-    const apiUrl = `https://d1r94zrwa3gnlo-cloudfront.vercel.app/host/cpx/${channel}`;
-    const apiResponse = await fetch(apiUrl);
-    const html = await apiResponse.text();
+    // Tenta primeiro com 'cpx', se falhar, tenta com 'ke'
+    const baseUrls = [
+      `https://d1r94zrwa3gnlo-cloudfront.vercel.app/host/cpx/${channel}`,
+      `https://d1r94zrwa3gnlo-cloudfront.vercel.app/host/ke/${channel}`,
+    ];
 
-    // Extrai a URL base do conteúdo HTML
+    let html;
+    for (let i = 0; i < baseUrls.length; i++) {
+      try {
+        const apiResponse = await fetch(baseUrls[i], { agent: new https.Agent({ rejectUnauthorized: false }) });
+        html = await apiResponse.text();
+
+        if (html.includes('http')) {
+          break;
+        }
+      } catch (_) {
+        // tenta o próximo
+      }
+    }
+
+    if (!html || !html.includes('http')) {
+      return res.status(404).send('Base de URL não encontrada');
+    }
+
     const match = html.match(/https?:\/\/[^\/]+\/[^\/]+/);
     if (!match) {
-      return res.status(404).send('Base de URL não encontrada');
+      return res.status(404).send('Base de URL não encontrada no HTML');
     }
 
     const baseUrl = match[0];
     const destinationUrl = `${baseUrl}/${restPath}`;
 
-    // Faz a requisição final para o destino
     const proxyResponse = await fetch(destinationUrl, {
       headers: {
         'User-Agent': '*',
         'Referer': 'https://embedcanaistv.com/',
       },
+      agent: new https.Agent({ rejectUnauthorized: false }),
     });
 
     const contentType = proxyResponse.headers.get('content-type') || 'application/octet-stream';
     const buffer = await proxyResponse.arrayBuffer();
 
-    // Retorna a resposta final
     res.setHeader('Content-Type', contentType);
     res.status(proxyResponse.status).send(Buffer.from(buffer));
   } catch (error) {
