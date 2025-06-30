@@ -1,12 +1,10 @@
 import https from 'https';
 
 export default async function handler(req, res) {
-  // Libera acesso de qualquer origem
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // Responde pré-verificações do navegador (CORS preflight)
   if (req.method === 'OPTIONS') {
     return res.status(204).end();
   }
@@ -27,19 +25,30 @@ export default async function handler(req, res) {
   const tryFetchHtml = async (path) => {
     try {
       const apiUrl = `https://d1r94zrwa3gnlo-cloudfront.vercel.app/host/${path}/${channel}`;
-      const response = await fetch(apiUrl, { agent: new https.Agent({ rejectUnauthorized: false }) });
-      if (!response.ok) throw new Error('Não retornou OK');
+      const response = await fetch(apiUrl, {
+        agent: new https.Agent({ rejectUnauthorized: false }),
+      });
+      if (!response.ok) throw new Error('Falha na resposta');
       const html = await response.text();
       const match = html.match(/https?:\/\/[^\/]+\/[^\/]+/);
       if (match) return match[0];
-    } catch (_) {}
-    return null;
+    } catch (err) {
+      return null;
+    }
   };
 
   try {
+    // Tenta primeiro com 'cpx'
     let baseUrl = await tryFetchHtml('cpx');
-    if (!baseUrl) baseUrl = await tryFetchHtml('ke');
-    if (!baseUrl) return res.status(404).send('Base de URL não encontrada');
+
+    // Se não funcionar, tenta com 'ke'
+    if (!baseUrl) {
+      baseUrl = await tryFetchHtml('ke');
+    }
+
+    if (!baseUrl) {
+      return res.status(404).send('Base de URL não encontrada');
+    }
 
     const destinationUrl = `${baseUrl}/${restPath}`;
     const proxyResponse = await fetch(destinationUrl, {
